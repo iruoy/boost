@@ -10,6 +10,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Laravel\Boost\Concerns\ConfiguresPrompts;
 use Laravel\Boost\Contracts\Agent;
 use Laravel\Boost\Contracts\McpClient;
 use Laravel\Boost\Install\Cli\DisplayHelper;
@@ -22,7 +23,8 @@ use Laravel\Boost\Install\Herd;
 use Laravel\Prompts\Concerns\Colors;
 use Laravel\Prompts\Terminal;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Finder\Finder;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\intro;
@@ -34,6 +36,7 @@ use function Laravel\Prompts\select;
 class InstallCommand extends Command
 {
     use Colors;
+    use ConfiguresPrompts;
 
     private CodeEnvironmentsDetector $codeEnvironmentsDetector;
 
@@ -50,12 +53,12 @@ class InstallCommand extends Command
     /** @var Collection<int, string> */
     private Collection $selectedBoostFeatures;
 
-    private string $projectName;
-
     /** @var array<non-empty-string> */
     private array $systemInstalledCodeEnvironments = [];
 
     private array $projectInstalledCodeEnvironments = [];
+
+    private string $projectName;
 
     private bool $enforceTests = true;
 
@@ -67,8 +70,7 @@ class InstallCommand extends Command
 
     public function handle(CodeEnvironmentsDetector $codeEnvironmentsDetector, Herd $herd, Terminal $terminal): void
     {
-        $this->bootstrap($codeEnvironmentsDetector, $herd, $terminal);
-
+        $this->bootstrap($codeEnvironmentsDetector, $herd, $terminal, $this->input, $this->output);
         $this->displayBoostHeader();
         $this->discoverEnvironment();
         $this->collectInstallationPreferences();
@@ -76,8 +78,10 @@ class InstallCommand extends Command
         $this->outro();
     }
 
-    private function bootstrap(CodeEnvironmentsDetector $codeEnvironmentsDetector, Herd $herd, Terminal $terminal): void
+    private function bootstrap(CodeEnvironmentsDetector $codeEnvironmentsDetector, Herd $herd, Terminal $terminal, InputInterface $input, OutputInterface $output): void
     {
+        $this->configurePrompts($input, $output);
+
         $this->codeEnvironmentsDetector = $codeEnvironmentsDetector;
         $this->herd = $herd;
         $this->terminal = $terminal;
@@ -136,27 +140,6 @@ class InstallCommand extends Command
         if (($this->shouldInstallMcp() || $this->shouldInstallHerdMcp()) && $this->selectedTargetMcpClient->isNotEmpty()) {
             $this->installMcpServerConfig();
         }
-    }
-
-    private function discoverTools(): array
-    {
-        $tools = [];
-        $toolDir = implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'Mcp', 'Tools']);
-        $finder = Finder::create()
-            ->in($toolDir)
-            ->files()
-            ->name('*.php');
-
-        foreach ($finder as $toolFile) {
-            $fullyClassifiedClassName = 'Laravel\\Boost\\Mcp\\Tools\\'.$toolFile->getBasename('.php');
-            if (class_exists($fullyClassifiedClassName, false)) {
-                $tools[$fullyClassifiedClassName] = Str::headline($toolFile->getBasename('.php'));
-            }
-        }
-
-        ksort($tools);
-
-        return $tools;
     }
 
     private function outro(): void
@@ -250,19 +233,6 @@ class InstallCommand extends Command
         }
 
         return collect(['mcp_server', 'ai_guidelines']);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    protected function boostToolsToDisable(): array
-    {
-        return multiselect(
-            label: 'Do you need to disable any Boost provided tools?',
-            options: $this->discoverTools(),
-            scroll: 4,
-            hint: 'You can exclude or include them later in the config file',
-        );
     }
 
     /**
@@ -373,7 +343,7 @@ class InstallCommand extends Command
         }
 
         if ($this->selectedTargetAgents->isEmpty()) {
-            $this->info(' No agents selected for guideline installation.');
+            $this->info(' No agents are selected for guideline installation.');
 
             return;
         }
@@ -461,7 +431,7 @@ class InstallCommand extends Command
         }
 
         if ($this->selectedTargetMcpClient->isEmpty()) {
-            $this->info('No agents selected for guideline installation.');
+            $this->info('No agents are selected for guideline installation.');
 
             return;
         }
