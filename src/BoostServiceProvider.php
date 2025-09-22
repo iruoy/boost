@@ -113,7 +113,12 @@ class BoostServiceProvider extends ServiceProvider
              *  } $log */
             foreach ($logs as $log) {
                 $logger->write(
-                    level: $this->mapJsTypeToPsr3Level($log['type']),
+                    level: match ($log['type']) {
+                        'warn' => 'warning',
+                        'log', 'table' => 'debug',
+                        'window_error', 'uncaught_error', 'unhandled_rejection' => 'error',
+                        default => $log['type']
+                    },
                     message: self::buildLogMessageFromData($log['data']),
                     context: [
                         'url' => $log['url'],
@@ -166,16 +171,6 @@ class BoostServiceProvider extends ServiceProvider
     private function registerBladeDirectives(BladeCompiler $bladeCompiler): void
     {
         $bladeCompiler->directive('boostJs', fn (): string => '<?php echo '.\Laravel\Boost\Services\BrowserLogger::class.'::getScript(); ?>');
-    }
-
-    private function mapJsTypeToPsr3Level(string $type): string
-    {
-        return match ($type) {
-            'warn' => 'warning',
-            'log', 'table' => 'debug',
-            'window_error', 'uncaught_error', 'unhandled_rejection' => 'error',
-            default => $type
-        };
     }
 
     private function hookIntoResponses(Router $router): void
