@@ -34,7 +34,7 @@ trait ReadsLogs
 
     private function getChunkSizeMax(): int
     {
-        return 1 * 1024 * 1024; // 1 MB
+        return 1024 * 1024; // 1 MB
     }
 
     /**
@@ -96,7 +96,7 @@ trait ReadsLogs
 
             for ($i = count($entries) - 1; $i >= 0; $i--) {
                 if ($this->isErrorEntry($entries[$i])) {
-                    return trim($entries[$i]);
+                    return trim((string) $entries[$i]);
                 }
             }
 
@@ -139,7 +139,7 @@ trait ReadsLogs
 
             // Split by beginning-of-entry look-ahead (PSR-3 timestamp pattern).
             $entries = preg_split($this->getEntrySplitRegex(), $content, -1, PREG_SPLIT_NO_EMPTY);
-            if (! $entries) {
+            if ($entries === [] || $entries === false) {
                 return [];
             }
 

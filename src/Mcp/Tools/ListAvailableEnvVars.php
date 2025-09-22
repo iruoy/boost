@@ -50,13 +50,13 @@ class ListAvailableEnvVars extends Tool
 
         $envLines = file_get_contents($filePath);
 
-        if (! $envLines) {
+        if ($envLines === '' || $envLines === '0' || $envLines === false) {
             return Response::error('Failed to read .env file.');
         }
 
         $count = preg_match_all('/^(?!\s*#)\s*([^=\s]+)=/m', $envLines, $matches);
 
-        if (! $count) {
+        if ($count === 0 || $count === false) {
             return Response::error('Failed to parse .env file');
         }
 

@@ -160,13 +160,16 @@ abstract class CodeEnvironment
         ], [
             $key,
             $command,
-            implode(' ', array_map(fn ($arg) => '"'.$arg.'"', $args)),
+            implode(' ', array_map(fn (string $arg): string => '"'.$arg.'"', $args)),
             trim($envString),
         ], $shellCommand);
 
         $result = Process::run($command);
+        if ($result->successful()) {
+            return true;
+        }
 
-        return $result->successful() || str_contains($result->errorOutput(), 'already exists');
+        return str_contains($result->errorOutput(), 'already exists');
     }
 
     /**
@@ -180,7 +183,7 @@ abstract class CodeEnvironment
     protected function installFileMcp(string $key, string $command, array $args = [], array $env = []): bool
     {
         $path = $this->mcpConfigPath();
-        if (! $path) {
+        if ($path === null || $path === '' || $path === '0') {
             return false;
         }
 

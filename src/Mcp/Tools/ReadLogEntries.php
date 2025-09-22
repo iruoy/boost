@@ -58,9 +58,10 @@ class ReadLogEntries extends Tool
         if ($entries === []) {
             return Response::text('Unable to retrieve log entries, or no entries yet.');
         }
+
         $logs = implode("\n\n", $entries);
 
-        if (empty(trim($logs))) {
+        if (in_array(trim($logs), ['', '0'], true)) {
             return Response::text('No log entries yet.');
         }
 
