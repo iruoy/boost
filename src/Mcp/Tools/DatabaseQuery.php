@@ -43,7 +43,7 @@ class DatabaseQuery extends Tool
     {
         $query = trim((string) $request->string('query'));
         $token = strtok(ltrim($query), " \t\n\r");
-        if ($token === '' || $token === '0' || $token === false) {
+        if ($token === false) {
             return Response::error('Please pass a valid query');
         }
 

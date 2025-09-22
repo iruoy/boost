@@ -85,7 +85,7 @@ class ToolExecutor
         if ($data['isError']) {
             $errorText = 'Unknown error';
 
-            if (is_array($data['content']) && (isset($data['content']) && $data['content'] !== [])) {
+            if (is_array($data['content']) && $data['content'] !== []) {
                 $firstContent = $data['content'][0] ?? [];
                 if (is_array($firstContent)) {
                     $errorText = $firstContent['text'] ?? $errorText;
@@ -96,7 +96,7 @@ class ToolExecutor
         }
 
         // Handle array format - extract text content
-        if (is_array($data['content']) && (isset($data['content']) && $data['content'] !== [])) {
+        if (is_array($data['content']) && $data['content'] !== []) {
             $firstContent = $data['content'][0] ?? [];
 
             if (is_array($firstContent)) {

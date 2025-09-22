@@ -347,7 +347,7 @@ class FileWriter
         if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 // If group 2 is set, we found a // comment outside strings
-                if (isset($match[2]) && ($match[2] !== '' && $match[2] !== '0')) {
+                if (isset($match[2])) {
                     return true;
                 }
             }
